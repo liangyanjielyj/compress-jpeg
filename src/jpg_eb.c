@@ -1,6 +1,6 @@
 #include <iostream>
-#include <stdio.h>
 using namespace std;
+#include <stdio.h>
 #include "jpge.h"
 #include "stb_image.c"
 #include <vector>
@@ -18,7 +18,7 @@ static int get_file_size(const char *pFilename)
   return file_size;
 }
 
-int jpeg_tupian(const char *dest,const char *src)
+int jpeg_to_jpeg(const char *dest,const char *src)
 {
 	int quality_factor = 5;//ÉèÖÃÑ¹ËõÏµÊý
 	DIR* dir = opendir(src);
@@ -27,7 +27,6 @@ int jpeg_tupian(const char *dest,const char *src)
 	{
 		if(p->d_name[0] != '.')
 		{
-			//budong
 			string name = src + string(p->d_name);
 			string dname = dest + string(p->d_name);
 			const char* pSrc_filename = name.c_str();
@@ -42,7 +41,6 @@ int jpeg_tupian(const char *dest,const char *src)
 				cout << "Quality factor must range from 1-100!\n" << endl;
 				return EXIT_FAILURE;
 			}
-			
 			// Load the source image.
 			const int req_comps = 3; // request RGB image
 			int width = 0, height = 0, actual_comps = 0;
@@ -55,8 +53,6 @@ int jpeg_tupian(const char *dest,const char *src)
 			
 			cout << "33Source file: " << pSrc_filename << ", width: " << width << ", height: " << height << ", actual_comps: " << actual_comps << endl;
 			
-
-
 			// Fill in the compression parameter structure.
 			struct params params_1;
 			params_1.m_quality = quality_factor;
@@ -64,9 +60,7 @@ int jpeg_tupian(const char *dest,const char *src)
 			params_1.m_two_pass_flag = optimize_huffman_tables;
 			
 			cout << "44Writing JPEG image to file: " << pDst_filename << endl;
-			//timer tm;
-			//budong
-
+	
 			// Now create the JPEG file.
 			if (test_memory_compression)
 			{

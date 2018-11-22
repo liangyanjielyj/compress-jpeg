@@ -10,8 +10,6 @@
 static inline void *jpge_malloc(size_t nSize) { return malloc(nSize); }
 static inline void jpge_free(void *p) { free(p); }
 
-//mv
-
 // Various JPEG enums and tables.
 enum { M_SOF0 = 0xC0, M_DHT = 0xC4, M_SOI = 0xD8, M_EOI = 0xD9, M_SOS = 0xDA, M_DQT = 0xDB, M_APP0 = 0xE0 };
 enum { DC_LUM_CODES = 12, AC_LUM_CODES = 256, DC_CHROMA_CODES = 12, AC_CHROMA_CODES = 256, MAX_HUFF_SYMBOLS = 257, MAX_HUFF_CODESIZE = 32 };
@@ -81,20 +79,19 @@ static params m_params;
 
 
 //mv
-
-/*static bool put_obj(const void* pBuf, int len){
+/*
+static bool put_obj(const void* pBuf, int len){
   return put_buf(pBuf,len);
-}*/
-
+}
+*/
 template<class T> inline bool put_obj(const T& obj) { return put_buf(&obj, sizeof(T));}
+
 // Low-level helper functions.
 template <class T> inline void clear_obj(T &obj) { memset(&obj, 0, sizeof(obj)); }
 
-//memory_stream(void *pBuf, uint buf_size) : m_pBuf(static_cast<uint8*>(pBuf)), m_buf_size(buf_size), m_buf_ofs(0) { }
 
 static bool put_buf(const void* pBuf, int len)
 {
-      printf("------len-------%d\n",len);
       uint buf_remaining = m_buf_size - m_buf_ofs;
       if ((uint)len > buf_remaining)
          return false;
@@ -107,13 +104,8 @@ static uint get_size()
 {
       return m_buf_ofs;
 }
-
-//static bool memory_stream(void *pBuf, uint buf_size) : m_pBuf(static_cast<uint8*>(pBuf)), m_buf_size(buf_size), m_buf_ofs(0) { }
   
-
-
 static uint get_total_passes(const params &m_params){ return m_params.m_two_pass_flag ? 2 : 1; }
-
 
 static void RGB_to_YCC(uint8* pDst, const uint8 *pSrc, int num_pixels)
 {
@@ -260,7 +252,7 @@ static void huffman_enforce_max_code_size(int *pNum_codes, int code_list_len, in
 }
 
 // Generates an optimized offman table.
-void jpeg_encoder::optimize_huffman_table(int table_num, int table_len)
+void optimize_huffman_table(int table_num, int table_len)
 {
   sym_freq syms0[MAX_HUFF_SYMBOLS], syms1[MAX_HUFF_SYMBOLS];
   syms0[0].m_key = 1; syms0[0].m_sym_index = 0;  // dummy symbol, assures that no valid code contains all 1's
@@ -296,39 +288,23 @@ void jpeg_encoder::optimize_huffman_table(int table_num, int table_len)
 }
 
 // JPEG marker generation.
-void jpeg_encoder::emit_byte(uint8 i)
+void emit_byte(uint8 i)
 {
-  if(!m_all_stream_writes_succeeded){
-     printf("55555555555555555\n");
-  }else{
-    printf("66666666666666666\n");
-  }
- if(!put_obj(i)){
-     printf("777777777777\n");
-  }else{
-    printf("8888888888888\n");
-  }
-
   m_all_stream_writes_succeeded = m_all_stream_writes_succeeded && put_obj(i);
-  if(!m_all_stream_writes_succeeded){
-     printf("55555555555555555\n");
-  }else{
-    printf("66666666666666666\n");
-  }
 }
 
-void jpeg_encoder::emit_word(uint i)
+void emit_word(uint i)
 {
   emit_byte(uint8(i >> 8)); emit_byte(uint8(i & 0xFF));
 }
 
-void jpeg_encoder::emit_marker(int marker)
+void emit_marker(int marker)
 {
   emit_byte(uint8(0xFF)); emit_byte(uint8(marker));
 }
 
 // Emit JFIF marker
-void jpeg_encoder::emit_jfif_app0()
+void emit_jfif_app0()
 {
   emit_marker(M_APP0);
   emit_word(2 + 4 + 1 + 2 + 1 + 2 + 2 + 1 + 1);
@@ -344,7 +320,7 @@ void jpeg_encoder::emit_jfif_app0()
 }
 
 // Emit quantization tables
-void jpeg_encoder::emit_dqt()
+void emit_dqt()
 {
   for (int i = 0; i < ((m_num_components == 3) ? 2 : 1); i++)
   {
@@ -357,7 +333,7 @@ void jpeg_encoder::emit_dqt()
 }
 
 // Emit start of frame marker
-void jpeg_encoder::emit_sof()
+void emit_sof()
 {
   emit_marker(M_SOF0);                           /* baseline */
   emit_word(3 * m_num_components + 2 + 5 + 1);
@@ -374,7 +350,7 @@ void jpeg_encoder::emit_sof()
 }
 
 // Emit Huffman table.
-void jpeg_encoder::emit_dht(uint8 *bits, uint8 *val, int index, bool ac_flag)
+void emit_dht(uint8 *bits, uint8 *val, int index, bool ac_flag)
 {
   emit_marker(M_DHT);
 
@@ -393,7 +369,7 @@ void jpeg_encoder::emit_dht(uint8 *bits, uint8 *val, int index, bool ac_flag)
 }
 
 // Emit all Huffman tables.
-void jpeg_encoder::emit_dhts()
+void emit_dhts()
 {
   emit_dht(m_huff_bits[0+0], m_huff_val[0+0], 0, false);
   emit_dht(m_huff_bits[2+0], m_huff_val[2+0], 0, true);
@@ -405,7 +381,7 @@ void jpeg_encoder::emit_dhts()
 }
 
 // emit start of scan
-void jpeg_encoder::emit_sos()
+void emit_sos()
 {
   emit_marker(M_SOS);
   emit_word(2 * m_num_components + 2 + 1 + 3);
@@ -424,7 +400,7 @@ void jpeg_encoder::emit_sos()
 }
 
 // Emit all markers at beginning of image file.
-void jpeg_encoder::emit_markers()
+void emit_markers()
 {
   emit_marker(M_SOI);
   emit_jfif_app0();
@@ -433,7 +409,7 @@ void jpeg_encoder::emit_markers()
   emit_dhts();
   emit_sos();
 }
-//----------------------------------------------------------------
+
 // Compute the actual canonical Huffman codes/code sizes given the JPEG huff bits and val arrays.
 void compute_huffman_table(uint *codes, uint8 *code_sizes, uint8 *bits, uint8 *val)
 {
@@ -467,8 +443,7 @@ void compute_huffman_table(uint *codes, uint8 *code_sizes, uint8 *bits, uint8 *v
     code_sizes[val[p]] = huff_size[p];
   }
 }
-//-----------------------------------------
-//-----------------------------------------
+
 // Quantization table generation.
 void compute_quant_table(int32 *pDst, int16 *pSrc, const params &m_params)
 {
@@ -483,8 +458,7 @@ void compute_quant_table(int32 *pDst, int16 *pSrc, const params &m_params)
     *pDst++ = JPGE_MIN(JPGE_MAX(j, 1), 255);
   }
 }
-//------------------------------------------
-//------------------------------------------
+
 // Higher-level methods.
 void first_pass_init()
 {
@@ -493,8 +467,8 @@ void first_pass_init()
   m_mcu_y_ofs = 0;
   m_pass_num = 1;
 }
-//------------------------------------------
-bool jpeg_encoder::second_pass_init()
+
+bool second_pass_init()
 {
   compute_huffman_table(&m_huff_codes[0+0][0], &m_huff_code_sizes[0+0][0], m_huff_bits[0+0], m_huff_val[0+0]);
   compute_huffman_table(&m_huff_codes[2+0][0], &m_huff_code_sizes[2+0][0], m_huff_bits[2+0], m_huff_val[2+0]);
@@ -508,8 +482,8 @@ bool jpeg_encoder::second_pass_init()
   m_pass_num = 2;
   return true;                                        
 }
-//---------------------------
-bool jpeg_encoder::jpg_open(int p_x_res, int p_y_res, int src_channels, const params &comp_params)
+
+bool jpg_open(int p_x_res, int p_y_res, int src_channels, const params &comp_params)
 {
   m_num_components = 3;
   switch (m_params.m_subsampling)
@@ -583,7 +557,7 @@ bool jpeg_encoder::jpg_open(int p_x_res, int p_y_res, int src_channels, const pa
   }
   return m_all_stream_writes_succeeded;
 }
-//---------------------------
+
 void load_block_8_8_grey(int x)
 {
   uint8 *pSrc;
@@ -669,7 +643,7 @@ void load_quantized_coefficients(int component_num)
   }
 }
 
-void jpeg_encoder::flush_output_buffer()
+void flush_output_buffer()
 {
   if (m_out_buf_left != JPGE_OUT_BUF_SIZE)
   m_all_stream_writes_succeeded = m_all_stream_writes_succeeded && put_buf(m_out_buf, JPGE_OUT_BUF_SIZE - m_out_buf_left);
@@ -677,7 +651,7 @@ void jpeg_encoder::flush_output_buffer()
   m_out_buf_left = JPGE_OUT_BUF_SIZE;
 }
 
-void jpeg_encoder::put_bits(uint bits, uint len)
+void put_bits(uint bits, uint len)
 {
   m_bit_buffer |= ((uint32)bits << (24 - (m_bits_in += len)));
   while (m_bits_in >= 8)
@@ -730,7 +704,7 @@ void code_coefficients_pass_one(int component_num)
   if (run_len) ac_count[0]++;
 }
 
-void jpeg_encoder::code_coefficients_pass_two(int component_num)
+void code_coefficients_pass_two(int component_num)
 {
   int i, j, run_len, nbits, temp1, temp2;
   int16 *pSrc = m_coefficient_array;
@@ -794,7 +768,7 @@ void jpeg_encoder::code_coefficients_pass_two(int component_num)
     put_bits(codes[1][0], code_sizes[1][0]);
 }
 
-void jpeg_encoder::code_block(int component_num)
+void code_block(int component_num)
 {
   DCT2D(m_sample_array);
   load_quantized_coefficients(component_num);
@@ -804,7 +778,7 @@ void jpeg_encoder::code_block(int component_num)
     code_coefficients_pass_two(component_num);
 }
 
-void jpeg_encoder::process_mcu_row()
+void process_mcu_row()
 {
   if (m_num_components == 1)
   {
@@ -839,7 +813,7 @@ void jpeg_encoder::process_mcu_row()
   }
 }
 
-bool jpeg_encoder::terminate_pass_one()
+bool terminate_pass_one()
 {
   optimize_huffman_table(0+0, DC_LUM_CODES); optimize_huffman_table(2+0, AC_LUM_CODES);
   if (m_num_components > 1)
@@ -849,7 +823,7 @@ bool jpeg_encoder::terminate_pass_one()
   return second_pass_init();
 }
 
-bool jpeg_encoder::terminate_pass_two()
+bool terminate_pass_two()
 {
   put_bits(0x7F, 7);
   flush_output_buffer();
@@ -858,7 +832,7 @@ bool jpeg_encoder::terminate_pass_two()
   return true;
 }
 
-bool jpeg_encoder::process_end_of_image()
+bool process_end_of_image()
 {
   if (m_mcu_y_ofs)
   {
@@ -877,7 +851,7 @@ bool jpeg_encoder::process_end_of_image()
     return terminate_pass_two();
 }
 
-void jpeg_encoder::load_mcu(const void *pSrc)
+void load_mcu(const void *pSrc)
 {
   const uint8* Psrc = reinterpret_cast<const uint8*>(pSrc);
 
@@ -929,33 +903,21 @@ void clear()
   m_all_stream_writes_succeeded = true;
 }
 
-jpeg_encoder::jpeg_encoder()
-{
-  clear();
-}
-
-jpeg_encoder::~jpeg_encoder()
-{
-  deinit();
-}
-//----------------------------------
-bool jpeg_encoder::init( int width, int height, int src_channels, const params &comp_params)
+bool init( int width, int height, int src_channels, const params &comp_params)
 {
   deinit();
   if (((width < 1) || (height < 1)) || ((src_channels != 1) && (src_channels != 3) && (src_channels != 4)) || (!comp_params.check())) return false;
-  //m_pStream = pStream;
-  printf("333333333333333333333\n");
   m_params = comp_params;
   return jpg_open(width, height, src_channels, comp_params);
 }
-//------------------------------------
+
 void deinit()
 {
   jpge_free(m_mcu_lines[0]);
   clear();
 }
 
-bool jpeg_encoder::process_scanline(const void* pScanline)
+bool process_scanline(const void* pScanline)
 {
   if ((m_pass_num < 1) || (m_pass_num > 2)) return false;
   if (m_all_stream_writes_succeeded)
@@ -971,23 +933,6 @@ bool jpeg_encoder::process_scanline(const void* pScanline)
   }
   return m_all_stream_writes_succeeded;
 }
-
-// Higher level wrappers/examples (optional).
-/*#include <stdio.h>
-//--------------------------
-class memory_stream : public output_stream
-{
-   
-   
-
-public:
-
-  memory_stream(void *pBuf, uint buf_size) : m_pBuf(static_cast<uint8*>(pBuf)), m_buf_size(buf_size), m_buf_ofs(0) { }
-  
-  
-   
-
-};*/
 bool memory_stream_init(void *pBuf, uint buf_size)
 {
   if (buf_size < 0)
@@ -999,44 +944,30 @@ bool memory_stream_init(void *pBuf, uint buf_size)
   m_pBuf = static_cast<uint8*>(pBuf);
 
 }
-//---------------------------
+
 bool compress_image_to_jpeg_file_in_memory(void *pDstBuf, int &buf_size, int width, int height, int num_channels, const uint8 *pImage_data, const params &comp_params)
 {
-   if ((!pDstBuf) || (!buf_size))
-      return false;
-    memory_stream_init(pDstBuf,buf_size);
-
-   //memory_stream dst_stream(pDstBuf, buf_size);
+  if ((!pDstBuf) || (!buf_size))
+    return false;
+  memory_stream_init(pDstBuf,buf_size);
   clear();
   buf_size = 0;
-  if(!m_all_stream_writes_succeeded){
-    printf("55555555--------555555555\n");
-  }else{
-    printf("666666---------66666666666\n");
+  if (!init(width, height, num_channels, comp_params)){
+    return false;
   }
-
-
-   jpeg_encoder dst_image;
-   if (!dst_image.init(width, height, num_channels, comp_params)){
-      printf("111111111111111\n");
+  for (uint pass_index = 0; pass_index < get_total_passes(comp_params); pass_index++)
+  {
+    for (int i = 0; i < height; i++)
+    {
+      const uint8* pScanline = pImage_data + i * width * num_channels;
+      if (!process_scanline(pScanline))
+          return false;
+    }
+    if (!process_scanline(NULL))
       return false;
-   }
-   printf("2222222222222222222\n");
-   for (uint pass_index = 0; pass_index < get_total_passes(comp_params); pass_index++)
-   {
-     for (int i = 0; i < height; i++)
-     {
-        const uint8* pScanline = pImage_data + i * width * num_channels;
-        if (!dst_image.process_scanline(pScanline))
-           return false;
-     }
-     if (!dst_image.process_scanline(NULL))
-        return false;
-   }
-
-   deinit();
-
-   buf_size = get_size();
-   return true;
+  }
+  deinit();
+  buf_size = get_size();
+  return true;
 }
 

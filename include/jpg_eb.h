@@ -5,6 +5,6 @@
 
 static int get_file_size(const char *pFilename);
 
-int jpeg_tupian(const char *dest,const char *src);
+int jpeg_to_jpeg(const char *dest,const char *src);
 
 
