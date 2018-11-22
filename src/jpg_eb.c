@@ -1,11 +1,7 @@
-#include <iostream>
-using namespace std;
+//using namespace std;
 #include <stdio.h>
 #include "jpge.h"
 #include "stb_image.c"
-#include <vector>
-#include <dirent.h>
-#include <string>
 #include "jpg_eb.h"
 
 static int get_file_size(const char *pFilename)
@@ -38,8 +34,8 @@ int jpeg_to_jpeg(const char *dest,const char *src)
 			char output_filename[256] = "";
 			if ((quality_factor < 1) || (quality_factor > 100))
 			{
-				cout << "Quality factor must range from 1-100!\n" << endl;
-				return EXIT_FAILURE;
+				printf("Quality factor must range from 1-100!\n");
+				return -1;
 			}
 			// Load the source image.
 			const int req_comps = 3; // request RGB image
@@ -47,11 +43,13 @@ int jpeg_to_jpeg(const char *dest,const char *src)
 			uint8 *pImage_data = stbi_load(pSrc_filename, &width, &height, &actual_comps, req_comps);
 			if (!pImage_data)
 			{
-				cout << "Failed loading file: " << pSrc_filename << endl;
-				return EXIT_FAILURE;
+				printf("Failed loading file: %s\n", pSrc_filename);
+				return -1;
 			}
-			
-			cout << "33Source file: " << pSrc_filename << ", width: " << width << ", height: " << height << ", actual_comps: " << actual_comps << endl;
+			printf("33Source file: %s",pSrc_filename );
+			printf(", width: %d",width );
+			printf(", height: %d", height);
+			printf(", actual_comps: %d\n", actual_comps);
 			
 			// Fill in the compression parameter structure.
 			struct params params_1;
@@ -59,7 +57,7 @@ int jpeg_to_jpeg(const char *dest,const char *src)
 			params_1.m_subsampling = (subsampling < 0) ? ((actual_comps == 1) ? Y_ONLY : H2V2) : static_cast<subsampling_t>(subsampling);
 			params_1.m_two_pass_flag = optimize_huffman_tables;
 			
-			cout << "44Writing JPEG image to file: " << pDst_filename << endl;
+			printf("44Writing JPEG image to file: %s\n", pDst_filename);
 	
 			// Now create the JPEG file.
 			if (test_memory_compression)
@@ -70,42 +68,37 @@ int jpeg_to_jpeg(const char *dest,const char *src)
 			
 				if (!compress_image_to_jpeg_file_in_memory(pBuf, buf_size, width, height, req_comps, pImage_data, params_1))
 				{
-					cout << "Failed creating JPEG data!\n" << endl;
-					return EXIT_FAILURE;
+					printf("Failed creating JPEG data!\n");
+					return -1;
 				} 
 			
 				FILE *pFile = fopen(pDst_filename, "wb");
 				if (!pFile)
 				{
-					cout << "Failed creating file: " << pDst_filename << endl;
-					return EXIT_FAILURE;
+					printf("Failed creating file: %s\n", pDst_filename);
+					return -1;
 				}
 			
 				if (fwrite(pBuf, buf_size, 1, pFile) != 1)
 				{
-					cout << "Failed writing to output file!" << endl;
-					return EXIT_FAILURE;
+					printf("Failed writing to output file!\n");
+					return -1;
 				}
 			
 				if (fclose(pFile) == EOF)
 				{
-					cout << "Failed writing to output file!" << endl;
-					return EXIT_FAILURE;
+					printf("Failed writing to output file!\n");
+					return -1;
 				}
 			}
 			else
 			{
-				cout << "Failed to compress image!" << endl;
-				return EXIT_FAILURE;
+				printf("Failed to compress image!\n");
+				return -1;
 			}
-			
 			const uint total_pixels = width * height;
 		}
 	}
-  cout << "Success.\n" << endl;
-  
-
-//	}
-//	closedir(dir);	
-  return EXIT_SUCCESS;
+	closedir(dir);	
+  return 1;
 }
