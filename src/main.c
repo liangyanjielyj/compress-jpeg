@@ -8,8 +8,11 @@ int main(int argc, char *argv[]){
 		printf("Usage : <%s> no srcfile + no destfile\n",argv[0]);
 		return -1;
 	}
-	
-    if(jpeg_to_jpeg(argv[1],argv[2])){
+	unsigned char *src = (unsigned char *)argv[2];
+	unsigned char *dest = (unsigned char *)argv[1];
+	unsigned char ratio = 6;
+	unsigned int len = 2;
+    if(jpeg_to_jpeg(dest,src,len,ratio)){
         printf("sucess\n");
      }
 

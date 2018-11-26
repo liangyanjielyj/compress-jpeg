@@ -75,16 +75,22 @@ const int YR = 19595, YG = 38470, YB = 7471, CB_R = -11059, CB_G = -21709, CB_B 
 static inline uint8 clamp(int i) { if (static_cast<uint>(i) > 255U) { if (i < 0) i = 0; else if (i > 255) i = 255; } return static_cast<uint8>(i); }
 static params m_params;
 
-/*
-static bool put_obj(const void* pBuf, int len){
-  return put_buf(pBuf,len);
+
+static bool put_obj(unsigned char pBuf){
+  return put_buf(&pBuf,sizeof(pBuf));
 }
-*/
-template<class T> inline bool put_obj(const T& obj) { return put_buf(&obj, sizeof(T));}
 
-// Low-level helper functions.
-template <class T> inline void clear_obj(T &obj) { memset(&obj, 0, sizeof(obj)); }
+static void clear_obj(void *obj){
+	memset(&obj, 0 , sizeof(obj));
+}
 
+static void clear_obj(unsigned char obj[4][17]){
+	memset(obj, 0, sizeof(obj));
+}
+
+static void clear_obj(signed int obj[4][256]){
+	memset(obj, 0, sizeof(obj));
+}
 
 static bool put_buf(const void* pBuf, int len)
 {

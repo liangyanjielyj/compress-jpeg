@@ -1,4 +1,3 @@
-//using namespace std;
 #include <stdio.h>
 #include "jpge.h"
 #include "stb_image.c"
@@ -14,20 +13,27 @@ static int get_file_size(const char *pFilename)
   return file_size;
 }
 
-int jpeg_to_jpeg(const char *dest,const char *src)
+int jpeg_to_jpeg(unsigned char *dest1, unsigned char *src1, unsigned int len, unsigned char ratio)
 {
-	int quality_factor = 5;//设置压缩系数
-	DIR* dir = opendir(src);
+	char *dest = (char *)dest1;
+	char *src = (char *)src1;
+	unsigned char quality_factor = ratio;//设置压缩系数
+	DIR* dir = opendir(src);  		
 	dirent* p;  
 	while(p = readdir(dir))	
 	{
 		if(p->d_name[0] != '.')
 		{
-			string name = src + string(p->d_name);
-			string dname = dest + string(p->d_name);
-			const char* pSrc_filename = name.c_str();
-			const char* pDst_filename = dname.c_str();
-
+			char * name = (char *)malloc(strlen(src)+strlen(p->d_name));
+			strcpy(name,src);
+			strcat(name,p->d_name);
+			const char* pSrc_filename =(const char *)malloc(strlen(name));
+			pSrc_filename = name;
+			char * dname = (char *)malloc(strlen(dest)+strlen(p->d_name)+1);
+			strcpy(dname,dest);
+			strcat(dname,p->d_name);
+			const char* pDst_filename = (const char *)malloc(strlen(dname));
+			pDst_filename = dname;
 			bool test_memory_compression = true;
 			bool optimize_huffman_tables = false;
 			int subsampling = -1;
@@ -71,7 +77,6 @@ int jpeg_to_jpeg(const char *dest,const char *src)
 					printf("Failed creating JPEG data!\n");
 					return -1;
 				} 
-			
 				FILE *pFile = fopen(pDst_filename, "wb");
 				if (!pFile)
 				{
@@ -96,7 +101,6 @@ int jpeg_to_jpeg(const char *dest,const char *src)
 				printf("Failed to compress image!\n");
 				return -1;
 			}
-			const uint total_pixels = width * height;
 		}
 	}
 	closedir(dir);	

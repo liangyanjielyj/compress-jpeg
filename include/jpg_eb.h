@@ -1,10 +1,9 @@
 #include "jpge.h"
-#include <vector>
 #include <dirent.h>
-#include <string>
+
 
 static int get_file_size(const char *pFilename);
 
-int jpeg_to_jpeg(const char *dest,const char *src);
+int jpeg_to_jpeg(unsigned char *dest,unsigned char *src, unsigned int len, unsigned char ratio);
 
 

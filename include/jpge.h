@@ -33,6 +33,8 @@ bool compress_image_to_jpeg_file_in_memory(void *pBuf, int &buf_size, int width,
 #ifndef CONFIG
 
   static int m_pass_num;
+  static bool put_obj(unsigned char pBuf);
+  static bool put_buf(const void* pBuf, int len);
   void first_pass_init();
   void compute_quant_table(int32 *dst, int16 *src, const params &comp_params);
   void clear();
